@@ -12,6 +12,8 @@ import {
 import theme from './src/global/styles/theme';
 
 import { Dashboard } from './src/screens/Dashboard/';
+import { Register } from './src/screens/Register';
+import { CategorySelect } from './src/screens/CategorySelect';
 
 
 export const App = () => {
@@ -28,7 +30,9 @@ export const App = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Dashboard />
+      {/* <Dashboard /> */}
+      <Register />
+      {/* <CategorySelect /> */}
     </ThemeProvider>
   );
 }
