@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { Modal, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
+import uuid from 'react-native-uuid';
+import {
+    useNavigation,
+    NavigationProp,
+    ParamListBase,
+} from "@react-navigation/native";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Button } from '../../components/Form/Button';
 import { CategorySelectButton } from '../../components/Form/CategorySelectButton';
@@ -34,15 +41,16 @@ const schema = Yup.object().shape({
 })
 
 export const Register = () => {
-
     const {
         control,
         handleSubmit,
+        reset,
         formState: { errors }
     } = useForm({
         resolver: yupResolver(schema)
     });
 
+    const { navigate }: NavigationProp<ParamListBase> = useNavigation();
     const [transactionType, setTransactionType] = useState('');
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
     const [category, setCategory] = useState({
@@ -50,7 +58,7 @@ export const Register = () => {
         name: 'Categoria'
     })
 
-    const handleTransactionTypesSelect = (type: 'up' | 'down') => {
+    const handleTransactionTypesSelect = (type: 'positive' | 'negative') => {
         setTransactionType(type);
     }
 
@@ -62,19 +70,46 @@ export const Register = () => {
         setCategoryModalOpen(false);
     }
 
-    const handleRegister = (form: FormData) => {
+    const resetFields = () => {
+        setTransactionType('');
+        setCategory({
+            key: 'category',
+            name: 'Categoria'
+        })
+        reset();
+        navigate('Listagem');
+    }
+
+    const handleRegister = async (form: FormData) => {
 
         if (!transactionType) return Alert.alert('Selecione o tipo da transação');
         if (category.key === 'category') return Alert.alert('Selecione a categoria');
 
 
-        const data = {
+        const newTransaction = {
+            id: String(uuid.v4()),
             name: form.name,
             amount: form.amount,
-            transactionType,
-            category: category.key
+            type: transactionType,
+            category: category.key,
+            date: new Date()
         }
-        console.log(data);
+
+        try {
+            const dataKey = '@gofinance@transactions';
+            const data = await AsyncStorage.getItem(dataKey);
+            const currentData = data ? JSON.parse(data) : [];
+            const dataFormatted = [
+                newTransaction,
+                ...currentData,
+            ]
+
+            await AsyncStorage.setItem(dataKey, JSON.stringify(dataFormatted));
+            resetFields();
+
+        } catch (error) {
+            Alert.alert('Não foi possivel salvar');
+        }
     }
 
     return (
@@ -107,15 +142,15 @@ export const Register = () => {
                             <TransactionTypeButton
                                 title='Income'
                                 type='up'
-                                onPress={() => handleTransactionTypesSelect('up')}
-                                isActive={transactionType === 'up'}
+                                onPress={() => handleTransactionTypesSelect('positive')}
+                                isActive={transactionType === 'positive'}
                             />
 
                             <TransactionTypeButton
                                 title='Outcome'
                                 type='down'
-                                onPress={() => handleTransactionTypesSelect('down')}
-                                isActive={transactionType === 'down'}
+                                onPress={() => handleTransactionTypesSelect('negative')}
+                                isActive={transactionType === 'negative'}
                             />
                         </TransactionTypes>
 
@@ -125,7 +160,7 @@ export const Register = () => {
                         />
                     </Fields>
 
-                    <Button title="Enviar" onPress={handleSubmit(() => handleRegister)} />
+                    <Button title="Enviar" onPress={handleSubmit(handleRegister)} />
                 </Form>
 
                 <Modal visible={categoryModalOpen}>
