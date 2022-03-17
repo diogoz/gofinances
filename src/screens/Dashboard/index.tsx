@@ -28,6 +28,7 @@ export interface DataListProps extends TransactionCardProps {
 
 interface HighlightProps {
     amount: string,
+    
 }
 interface HighlightData {
     entries: HighlightProps,
