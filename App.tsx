@@ -16,6 +16,7 @@ import theme from './src/global/styles/theme'
 import { AppRoutes } from './src/routes/app.routes'
 import { StatusBar } from 'react-native'
 import { SignIn } from './src/screens/SignIn'
+import { AuthProvider } from './src/hooks/auth'
 
 export const App = () => {
   const [fontsLoaded] = useFonts({
@@ -37,7 +38,9 @@ export const App = () => {
           translucent
         />
         {/* <AppRoutes /> */}
-        <SignIn />
+        <AuthProvider>
+          <SignIn />
+        </AuthProvider>
       </NavigationContainer>
     </ThemeProvider>
   )
